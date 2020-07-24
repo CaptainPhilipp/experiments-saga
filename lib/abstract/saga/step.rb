@@ -5,24 +5,25 @@ module Abstract
 
       include Shoryuken::Worker
 
-      class << self
-        # ! возможно случайно вызвать в шаге, что приведёт к рекурсии
-        def call(dto)
-          AwsSns::Sender.call(topic_key: topic_key, message: JSON[dto.to_h])
-        end
+      def self.call(dto)
+        AwsSns::Sender.call(topic_key: topic_key, message: JSON[dto.to_h])
       end
 
-      # * from `Shoryuken::Worker`
+      # * метод для `Shoryuken::Worker`
       def perform(_sqs_message, body)
         data = JSON[body]
         dto  = dto_class.wrap(data)
         call(dto)
       end
 
-      # ? возможно этот метод можно сделать метамагией
-      # ?   так как Сага этого Шага и так известна
+      # ! лучше сделать метамагией, так как Сага этого Шага известна из неймспейса
       # @ abstract
       def dto_class
+        raise NotImplementedError
+      end
+
+      # ! лучше сделать метамагией, так как ключ можно сделать из имени класса
+      def topic_key
         raise NotImplementedError
       end
     end
